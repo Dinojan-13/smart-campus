@@ -10,6 +10,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.DELETE;
 
 import com.smartcampus.model.Room;
 import com.smartcampus.store.DataStore;
@@ -79,4 +80,38 @@ public Response getRoomById(@PathParam("roomId") String roomId) {
 
     return Response.ok(room).build();
 }
+
+/**
+ * DELETE /api/v1/rooms/{roomId}
+ * Deletes a room from the system.
+ * Returns 404 if room does not exist.
+ * Returns 409 if room still has sensors assigned to it.
+ * A room cannot be deleted while it has active sensors — prevents data orphans.
+ */
+@DELETE
+@Path("/{roomId}")
+public Response deleteRoom(@PathParam("roomId") String roomId) {
+    // Check if room exists
+    Room room = DataStore.rooms.get(roomId);
+    if (room == null) {
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity("{\"error\": \"Room not found: " + roomId + "\"}")
+                .build();
+    }
+
+    // Block deletion if room still has sensors assigned
+    // This will be replaced with RoomNotEmptyException on Day 5
+    if (!room.getSensorIds().isEmpty()) {
+        return Response.status(Response.Status.CONFLICT)
+                .entity("{\"error\": \"Room still has " + room.getSensorIds().size() + " sensor(s) assigned. Remove them first.\"}")
+                .build();
+    }
+
+    // Remove room from store
+    DataStore.rooms.remove(roomId);
+
+    // 204 No Content — successful deletion with no response body
+    return Response.noContent().build();
+}
+
 }
