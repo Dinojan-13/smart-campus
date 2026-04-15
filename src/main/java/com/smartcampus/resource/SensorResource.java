@@ -118,4 +118,15 @@ public Response getSensorById(@PathParam("sensorId") String sensorId) {
 
     return Response.ok(sensor).build();
 }
+
+/**
+ * Sub-resource locator for /api/v1/sensors/{sensorId}/readings
+ * Delegates all reading-related requests to SensorReadingResource.
+ * This pattern keeps the SensorResource clean and focused.
+ */
+@Path("/{sensorId}/readings")
+public SensorReadingResource getReadingResource(@PathParam("sensorId") String sensorId) {
+    return new SensorReadingResource(sensorId);
+}
+
 }
